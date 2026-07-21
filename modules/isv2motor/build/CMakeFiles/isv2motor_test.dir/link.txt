@@ -1,0 +1,1 @@
+/usr/bin/c++  -pthread -I/usr/local/include -L/usr/local/lib  -rdynamic CMakeFiles/isv2motor_test.dir/src/isv2motor.cpp.o CMakeFiles/isv2motor_test.dir/src/isv2motor_command.cpp.o CMakeFiles/isv2motor_test.dir/src/isv2motor_test.cpp.o CMakeFiles/isv2motor_test.dir/src/jetson_can.c.o CMakeFiles/isv2motor_test.dir/src/jetson_spi.c.o  -o isv2motor_test 

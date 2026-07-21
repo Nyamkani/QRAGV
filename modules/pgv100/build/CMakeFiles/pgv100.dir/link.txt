@@ -1,0 +1,2 @@
+/usr/bin/ar qc libpgv100.a  CMakeFiles/pgv100.dir/src/pgv100.cpp.o CMakeFiles/pgv100.dir/src/pgv100_test.cpp.o CMakeFiles/pgv100.dir/src/jetson_uart.c.o
+/usr/bin/ranlib libpgv100.a

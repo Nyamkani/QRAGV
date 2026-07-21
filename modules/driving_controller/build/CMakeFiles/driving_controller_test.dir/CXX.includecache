@@ -1,0 +1,36 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+../include/driving_controller/driving_controller.hpp
+cmath
+-
+vector
+-
+chrono
+-
+string
+-
+iostream
+-
+mutex
+-
+thread
+-
+cmath
+-
+pgv100/pgv100.hpp
+-
+isv2motor/isv2motor.hpp
+-
+isv2motor/isv2motor_define.hpp
+-
+
+/home/jetson/workspace/QRAGV/modules/driving_controller/src/driving_controller_test.cpp
+driving_controller/driving_controller.hpp
+/home/jetson/workspace/QRAGV/modules/driving_controller/src/driving_controller/driving_controller.hpp
+

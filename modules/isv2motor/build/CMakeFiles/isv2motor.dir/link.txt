@@ -1,0 +1,2 @@
+/usr/bin/ar qc libisv2motor.a  CMakeFiles/isv2motor.dir/src/isv2motor.cpp.o CMakeFiles/isv2motor.dir/src/isv2motor_command.cpp.o CMakeFiles/isv2motor.dir/src/isv2motor_test.cpp.o CMakeFiles/isv2motor.dir/src/jetson_can.c.o CMakeFiles/isv2motor.dir/src/jetson_spi.c.o
+/usr/bin/ranlib libisv2motor.a

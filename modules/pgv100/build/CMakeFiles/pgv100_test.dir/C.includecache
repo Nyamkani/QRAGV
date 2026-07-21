@@ -1,0 +1,36 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+../include/pgv100/jetson_uart.h
+stdint.h
+-
+stdio.h
+-
+stdbool.h
+-
+string.h
+-
+fcntl.h
+-
+termios.h
+-
+unistd.h
+-
+errno.h
+-
+sys/types.h
+-
+sys/stat.h
+-
+sys/select.h
+-
+
+/home/jetson/workspace/QRAGV/driving/modules/pgv100/src/jetson_uart.c
+pgv100/jetson_uart.h
+/home/jetson/workspace/QRAGV/driving/modules/pgv100/src/pgv100/jetson_uart.h
+

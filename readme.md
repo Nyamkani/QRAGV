@@ -2,6 +2,17 @@
 
 QRAGV는 ROS를 사용하지 않고 C++와 CMake로 구성한 AGV(Automated Guided Vehicle) 제어 프로토타입입니다. NVIDIA Jetson Nano에서 PGV100 광학 위치 센서와 ISV2 모터를 연동하고, 센서 데이터에 따라 차량을 제어하는 구조를 직접 구현하고 학습하기 위해 개발했습니다.
 
+<p align="center">
+  <img src="./docs/images/jetson_nano_rs485_can.jpg"
+       alt="RS485 and CAN expansion module for NVIDIA Jetson Nano"
+       width="500">
+</p>
+
+<p align="center">
+  Jetson Nano에서 사용한 RS485/CAN 확장 모듈<br>
+  RS485/CAN expansion module used with the Jetson Nano
+</p>
+
 ## 개발 환경
 
 | 항목 | 내용 |
@@ -13,7 +24,7 @@ QRAGV는 ROS를 사용하지 않고 C++와 CMake로 구성한 AGV(Automated Guid
 | 빌드 시스템 | CMake |
 | 실행 구조 | 독립 실행형 애플리케이션 (ROS 미사용) |
 | 실행 파일 | `QRAGV` |
-| 주요 장치 | Ethernet-CAN converter, ISV2 motor driver and motor, Pepperl+Fuchs PGV100 optical positioning sensor |
+| 주요 장치 | Jetson Nano용 RS485/CAN 확장 모듈, Ethernet-CAN converter, ISV2 motor driver and motor, Pepperl+Fuchs PGV100 optical positioning sensor |
 
 > Ubuntu 버전은 당시 개발 환경 기록이 남아 있지 않아 특정하지 않았습니다. `Linux 4.9.253-tegra`는 소스 헤더에서 확인된 커널 정보입니다.
 
@@ -59,6 +70,19 @@ flowchart LR
 - FSM 기반의 최상위 AGV 동작 관리
 - 직선 주행을 부드럽게 하기 위한 S-curve 속도 프로파일 적용
 
+## 실제 주행 검증
+
+<p align="center">
+  <img src="./docs/images/qragv_driving.gif"
+       alt="QRAGV driving test"
+       width="300">
+</p>
+
+<p align="center">
+  QRAGV 실제 주행 검증<br>
+  QRAGV driving test
+</p>
+
 ## 알려진 한계
 
 - 별도의 상태 추정 필터를 사용하지 않아 장시간 주행 시 추정 위치가 실제 위치에서 점차 벗어날 수 있습니다.
@@ -95,7 +119,7 @@ QRAGV is a standalone Automated Guided Vehicle (AGV) control prototype built wit
 | Build system | CMake |
 | Runtime structure | Standalone application (without ROS) |
 | Executable | `QRAGV` |
-| Main devices | Ethernet-CAN converter, ISV2 motor driver and motor, Pepperl+Fuchs PGV100 optical positioning sensor |
+| Main devices | RS485/CAN expansion module for Jetson Nano, Ethernet-CAN converter, ISV2 motor driver and motor, Pepperl+Fuchs PGV100 optical positioning sensor |
 
 > The exact Ubuntu version is not specified because no reliable record of the original distribution version remains. `Linux 4.9.253-tegra` is the kernel information found in the source headers.
 

@@ -57,7 +57,6 @@ int main(int argc, char **argv)
 
     //     test1->target_pos_queue_.push_back(target);
 
-
     if(argc == 5)
     {
         target_pos_x = atoi(argv[1]);

@@ -43,6 +43,22 @@ extern "C" {
 #include <cmath>
 
 
+#define MAX_MOVING_ITR        0
+#define MAX_ALLOW_ERROR       0.5f
+
+
+enum ProfilerStatus
+{
+  sInit = 0,
+  sRun = 1,
+  sEnd = 2,
+  sFinish = 3,
+
+  sFail = 10,
+  sError = 100,
+};
+
+
 struct testcurvestruct
 {
   double phase_time[7];
@@ -59,34 +75,100 @@ struct ScurveCalculatedParams
 class ScurveProfiler
 {
   private:
+    int status_ = ProfilerStatus::sInit;
+    int moving_itr = 0;
+
+    int phase_ = 0;
+    bool start_sig = false;
+
+    bool check_test= false;
+
     double jerk_;
     double max_acc_;
+    double max_dec_;
     double max_speed_;
 
-    int target_pos_;
-    int present_pos_;
-    int moving_distance_;
+
+    /*Common values*/
+    double origin_pos_;
+    double target_pos_;
+    double present_pos_;
+    double moving_distance_;
     int moving_dir_;
+    double current_speed_;
+  
+
+    /*five s curve*/
+    double tacc_;
+    double tdec_;
+    double tvel_;
+    double ja_;
+    double jd_;
+
+    double vs_;
+    double ve_;
+
+    // double tja = 0;
+    // double tjd = 0;
+
+    double tv_ = 0.0f;
+
+
+    double p1_ = 0.0f;
+    double p2_ = 0.0f;
+    double p3_ = 0.0f;
+    double p4_ = 0.0f;
+    double p5_ = 0.0f;
+
+
+
+
+
+
+
+
+
+    /*output*/
+    double desired_speed_ = 0.0f;
+    double desired_pos_ = 0.0f;
 
     std::chrono::steady_clock::time_point start_time_;
+    std::chrono::steady_clock::time_point delay_time_;
+    double time_offset_ = 0.0f;
 
     double phase_time_[7];
     ScurveCalculatedParams phase_time_params_[7];
 
+  
+
+    int stop_cnt_ = 0;
+
   public:
 
   private:
+    int ScurveProfileGenerator();
+    int ScurveProfileWorker();
+
 
   public:
     ScurveProfiler();
     ScurveProfiler(double jerk, double max_acc, double max_speed);
     ~ScurveProfiler();
 
-    void SetTargetPostion(int target_pos);
-    void SetPresentPostion(int present_pos);
 
-    int ScurveProfileGenerator();
-    int ScurveProfileWorker();
+    void SetPresentSpeed(double speed);
+    void SetOriginPosition(double origin_pos);
+    void SetTargetPosition(double target_pos);
+    void SetPresentPosition(double present_pos);
+    void SetPhase(int phase);
+
+    int Drive();
+
+
+    double GetCalculatedVel();
+    int GetStatusProfiler();
+
+
 
 };
 
@@ -104,4 +186,13 @@ int TestScurveProfileWorker(testcurvestruct tests,
 
 
 
+/*---------------------------------------------------------------------------------------------------------------*/
+
+
+
+
+
 #endif  // MOTOR_CONTROLLERS_HPP
+
+
+

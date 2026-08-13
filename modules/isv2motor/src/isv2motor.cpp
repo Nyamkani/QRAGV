@@ -24,6 +24,9 @@
 
 #include "isv2motor/isv2motor.hpp"
 
+static bool hw_init_ = false;
+
+
 isv2motor::isv2motor(){}
 
 
@@ -39,6 +42,44 @@ isv2motor::isv2motor(double motor_acc, double motor_dec, double max_motor_vel)
   this->motor_dec_ = motor_dec;
   this->max_motor_vel_ = max_motor_vel;
 }
+
+isv2motor::isv2motor(DrivingController* controller)
+{
+  this->controller_ = controller;
+
+  if((this->controller_))
+  {
+    this->motor_acc_ = this->controller_->max_acc_;
+    this->motor_dec_ = this->controller_->max_dec_;
+    this->max_motor_vel_ = this->controller_->max_vel_;
+
+    this->wheel_radius_ = this->controller_->wheel_radius_;
+    this->reducer_rate_ = this->controller_->reducer_rate_;
+    this->motor_encoder_increment = this->controller_->encoder_ticks_;
+  }
+}
+
+isv2motor::isv2motor(DrivingController* controller, int node_id, int motor_dir)
+{
+  this->controller_ = controller;
+
+  if((this->controller_))
+  {
+    this->motor_acc_ = this->controller_->max_acc_;
+    this->motor_dec_ = this->controller_->max_dec_;
+    this->max_motor_vel_ = this->controller_->max_vel_;
+
+    this->wheel_radius_ = this->controller_->wheel_radius_;
+    this->reducer_rate_ = this->controller_->reducer_rate_;
+    this->motor_encoder_increment = this->controller_->encoder_ticks_;
+
+  }
+
+  this->RegisterMotor(node_id, motor_dir);  //right- mini sCCW  big - sCW
+
+}
+
+
 
 
 isv2motor::~isv2motor()
@@ -73,6 +114,20 @@ kssbot_hardware::IReturnType isv2motor::Init()
     return kssbot_hardware::IReturnType::kReturnError;
 
   this->is_init_ = true;
+
+  int status = 0;
+
+  int cnt = 0;
+
+  while(status < 0)
+  {
+    status = this->Read();
+
+    usleep(10*1000);
+
+    if(cnt++ > 100)
+      break;
+  }
 
   this->state_ = kssbot_hardware::LifeCycleState::kRun;
 
@@ -142,7 +197,7 @@ kssbot_hardware::IReturnType isv2motor::Write()
 
       case Isv2MotorCommand::cSetMoveStop:
       {
-        this->CANIdInstantSetVel(id, 0);
+        this->CANIdInstantMoveStop(id);
 
         break;
       }
@@ -153,7 +208,7 @@ kssbot_hardware::IReturnType isv2motor::Write()
 
     motor->command_queue.erase(motor->command_queue.begin());
 
-    usleep(1000);
+    // usleep(1);
   }
 
 
@@ -171,66 +226,89 @@ kssbot_hardware::IReturnType isv2motor::Read()
   // }
 
   /*Send data and check error*/
-  if(!(this->recv_cmd_queue_.empty()) && this->send_flag_ == 0)
-  {
-    CAN_data_struct send_data_buf = this->recv_cmd_queue_.front();
+  // if(!(this->recv_cmd_queue_.empty()) && this->send_flag_ == 0)
+  // {
+  //   CAN_data_struct send_data_buf = this->recv_cmd_queue_.front();
     
-    #if SEND_CAN_DPRINT
-      printf("send data : id = %x, index = %x ", send_data_buf.id, (send_data_buf.data[2]<< 8) + send_data_buf.data[1] );
+  //   #if SEND_CAN_DPRINT
+  //     printf("send data : id = %x, index = %x ", send_data_buf.id, (send_data_buf.data[2]<< 8) + send_data_buf.data[1] );
 
-      for(int i = 4; i<8; i++)
-        printf("%x ", send_data_buf.data[i]);
+  //     for(int i = 4; i<8; i++)
+  //       printf("%x ", send_data_buf.data[i]);
 
-      printf("\r\n");
-    #endif
+  //     printf("\r\n");
+  //   #endif
 
-    if(MCP2515_CANsend(send_data_buf) < 0)
-      return kssbot_hardware::IReturnType::kReturnError;
+  //   if(MCP2515_CANsend(send_data_buf) < 0)
+  //     return kssbot_hardware::IReturnType::kReturnError;
 
-    if(this->last_send_id_ == send_data_buf.id)
-    {
-      if(this->send_repeat_cnt_++ > 3)
-      {
-        this->send_repeat_cnt_ = 0;
+  //   if(this->last_send_id_ == send_data_buf.id)
+  //   {
+  //     if(this->send_repeat_cnt_++ > 3)
+  //     {
+  //       this->send_repeat_cnt_ = 0;
 
-        this->send_cmd_queue_.clear();
+  //       this->send_cmd_queue_.clear();
 
-        for(auto& node : this->motor_data_)
-          this->CANIdInstantMoveStop(node->node_id);
-      }
-    }
-    else
-    {
-      this->send_repeat_cnt_ = 0;
-    }
+  //       for(auto& node : this->motor_data_)
+  //         this->CANIdInstantMoveStop(node->node_id);
+  //     }
+  //   }
+  //   else
+  //   {
+  //     this->send_repeat_cnt_ = 0;
+  //   }
 
-  }
+  // }
 
   /*Read data and check error*/
-  CAN_data_struct recv_data_buf = {0,};
+  // CAN_data_struct recv_data_buf = {0,};
 
 
-  if(MCP2515_CANRecv(&recv_data_buf) < 0)
-    return kssbot_hardware::IReturnType::kReturnError;
+  // if(MCP2515_CANRecv(&recv_data_buf) < 0)
+  //   return kssbot_hardware::IReturnType::kReturnError;
 
-  this->recv_data_queue_.push_back(recv_data_buf);
+  // #if RECV_CAN_DPRINT
+  //   printf("recved data : id = %x, index = %x ", recv_data_buf.id, (recv_data_buf.data[2]<< 8) + recv_data_buf.data[1] );
 
-  #if RECV_CAN_DPRINT
-    printf("recved data : id = %x, index = %x ", recv_data_buf.id, (recv_data_buf.data[2]<< 8) + recv_data_buf.data[1] );
+  //   for(int i = 0; i<8; i++)
+  //     printf("%x ", recv_data_buf.data[i]);
 
-    for(int i = 0; i<8; i++)
-      printf("%x ", recv_data_buf.data[i]);
+  //   printf("\r\n");
+  // #endif
 
-    printf("\r\n");
-  #endif
+  // this->recv_data_queue_.push_back(recv_data_buf);
 
-  while(this->recv_data_queue_.empty())
+  // if(this->recv_data_queue_.empty())
+  // {
+  //     for(int i = 1; i <3; i++)
+  //   {
+
+  //     this->CANIdReadEncoder(i);
+  //   }
+  // }
+
+
+  // if(this->recv_data_queue_.empty())
+  // {
+  //   this->CANIdReadEncoder(this->motor_data_.front()->node_id);
+  // }
+
+
+  while(!(this->recv_data_queue_.empty()))
   {
     /*---------------------------Read data Parsing*/
     /*SDO Check*/
-    if((this->recv_cmd_queue_.front().id - CANIDType::sWSDO) == (recv_data_buf.id - CANIDType::sRSDO) &&
-        this->recv_cmd_queue_.front().data[1] == recv_data_buf.data[1] &&
-        this->recv_cmd_queue_.front().data[2] == recv_data_buf.data[2])
+    // if((!(this->recv_cmd_queue_.empty()) &&
+    //     this->recv_cmd_queue_.front().id - CANIDType::sWSDO) == (recv_data_buf.id - CANIDType::sRSDO) &&
+    //     this->recv_cmd_queue_.front().data[1] == recv_data_buf.data[1] &&
+    //     this->recv_cmd_queue_.front().data[2] == recv_data_buf.data[2])
+
+    CAN_data_struct recv_data_buf = recv_data_queue_.front();
+    int node_id = (recv_data_buf.id  & 0xf);
+
+
+    if(recv_data_buf.id - node_id == CANIDType::sRSDO)
     {
       // int status = (recv_data_buf.data[2]<< 8) + recv_data_buf.data[1];
 
@@ -251,14 +329,35 @@ kssbot_hardware::IReturnType isv2motor::Read()
       //   target_motor->current_motor_dir = target_motor->is_motor_reversed_ * dir;
       // }
 
-      this->recv_cmd_queue_.erase(this->recv_cmd_queue_.begin());
+              /*Object A = Status Word*/
+      int status = (recv_data_buf.data[2]<< 8) + recv_data_buf.data[1];
+
+      Isv2MotorStruct* target_motor = GetIsv2MotorStruct(node_id);
+
+      if(!(target_motor)) 
+        break;
+
+
+      if(status == 0x6064)  //id = pos. encoder
+      {
+          int act_pos = 0;
+
+          for (int i = 4; i < 8; i++)
+            act_pos |= (recv_data_buf.data[i] << (8*(i-4)));
+
+          target_motor->current_motor_pos = target_motor->is_motor_reversed_ * act_pos;
+
+      }
+      this->recv_data_queue_.erase(this->recv_data_queue_.begin());
     }
     else
     {
 
       /*RPDO Check*/
-      int node_id = (recv_data_buf.id  & 0xf);
-      int RPDO_id = recv_data_buf.id - node_id;
+      // int node_id = (recv_data_buf.id  & 0xf);
+      int RPDO_id = recv_data_queue_.front().id - node_id;
+
+      // printf("current read id = %d, RPDO id = %d\r\n", node_id, RPDO_id);
 
       switch(RPDO_id)
       {
@@ -337,7 +436,7 @@ kssbot_hardware::IReturnType isv2motor::Read()
           for (int i = 4; i < 8; i++)
             act_vel |= (recv_data_buf.data[i] << (8*(i-4)));
 
-          target_motor->current_motor_speed = -1* target_motor->is_motor_reversed_* act_vel;
+          target_motor->current_motor_speed = target_motor->is_motor_reversed_* act_vel;
 
           if(target_motor->current_motor_speed >= 0)
             target_motor->current_motor_dir = 1;
@@ -393,13 +492,13 @@ kssbot_hardware::IReturnType isv2motor::Read()
     }
   }
 
-  if(this->send_flag_++ > 5)
-  {
-    this->send_flag_ = 0;
+  // if(this->send_flag_++ > 5)
+  // {
+  //   this->send_flag_ = 0;
 
-    // printf("current pos - Left : %d  Right : %d \r\n", motor_data_.at(0)->current_motor_pos, motor_data_.at(1)->current_motor_pos);
+  //   // printf("current pos - Left : %d  Right : %d \r\n", motor_data_.at(0)->current_motor_pos, motor_data_.at(1)->current_motor_pos);
 
-  }
+  // }
    
 
   return kssbot_hardware::IReturnType::kReturnOk;
@@ -476,8 +575,16 @@ kssbot_hardware::IReturnType isv2motor::Drive()
 
 kssbot_hardware::IReturnType isv2motor::HardwareInitiailize()
 {
-  if(MCP2515_CANinit()!= kssbot_hardware::IReturnType::kReturnOk) 
-    return kssbot_hardware::IReturnType::kReturnError;
+  if(hw_init_ == false)
+  {
+    if(MCP2515_CANinit()!= kssbot_hardware::IReturnType::kReturnOk) 
+      return kssbot_hardware::IReturnType::kReturnError;
+
+    CANIdInstantReset();
+
+
+    hw_init_ = true;
+  }
 
   this->is_hw_init_ = true;
 
@@ -491,42 +598,70 @@ kssbot_hardware::IReturnType isv2motor::SystemInitiailize()
 
   /*CAN id Register*/
   this->DeleteAllMotor();
+ 
+  if(this->motor_data_.empty())
+  {
+    this->DeleteAllMotor();
 
-  this->RegisterMotor(LEFT_MOTOR_NODE, Isv2MotorDir::sCCW);
+    this->RegisterMotor(LEFT_MOTOR_NODE, Isv2MotorDir::sCCW);  //mini sCW  big - sCCW
+    
+    this->RegisterMotor(RIGHT_MOTOR_NODE, Isv2MotorDir::sCW);  //mini sCCW  big - sCW
 
-  this->RegisterMotor(RIGHT_MOTOR_NODE, Isv2MotorDir::sCW);
 
-  CANIdInstantReset();
+  }
+
 
   for (auto& node : motor_data_)
     CANIdInstantRegister(node->node_id);
 
+  usleep(10000);
+
+  //reset alarm
+  for (auto& node : motor_data_)
+    this->CANIdInstantSetControlWord(node->node_id, Isv2MotorControlWord::sAlarmReset);
+
+  usleep(10000);
 
   //move to ready to switch on status
   for (auto& node : motor_data_)
     this->CANIdInstantSetControlWord(node->node_id, Isv2MotorControlWord::sPowerOn);
 
+  usleep(10000);
+
+
   //move to switch on status
   for (auto& node : motor_data_)
     this->CANIdInstantSetControlWord(node->node_id, Isv2MotorControlWord::sMotorStart);
+
+  usleep(10000);
+
 
   //move to enable status
   for (auto& node : motor_data_)
     this->CANIdInstantSetControlWord(node->node_id, Isv2MotorControlWord::sServoOn);
 
+  usleep(10000);
+
+
   //vel mode change
   for (auto& node : motor_data_)
     this->CANIdInstantSetModeOperation(node->node_id, Isv2MotorModeOperation::sVelMode);
 
+  usleep(10000);
 
 
   //accel  change
   for (auto& node : motor_data_)
     this->CANIdInstantSetAccel(node->node_id, ChangeMMsToRPM(this->motor_acc_, this->wheel_radius_, this->motor_encoder_increment, this->reducer_rate_)); //10000* rpm/60  ex.) 2m/s^2 = 2000mm/s^2 -> 2000/*40*2*pi = 7.95 = 8 
 
+  usleep(10000);
+
+
   //decel  change
   for (auto& node : motor_data_)
     this->CANIdInstantSetDecel(node->node_id, ChangeMMsToRPM(this->motor_dec_, this->wheel_radius_, this->motor_encoder_increment, this->reducer_rate_));
+
+  usleep(10000);
 
   // for (auto& node : motor_data_)
   //   this->CANIdReadPolarity(node->node_id);
@@ -813,7 +948,6 @@ kssbot_hardware::IReturnType isv2motor::RegisterMotor(int node, int motor_dir)
   return kssbot_hardware::IReturnType::kReturnOk;
 }
 
-
 kssbot_hardware::IReturnType isv2motor::DeleteMotor(int node)
 {
 
@@ -850,8 +984,17 @@ kssbot_hardware::IReturnType isv2motor::DeleteAllMotor()
 //--------------------------------------------------------------------------------return types
 std::vector<Isv2MotorStruct*> isv2motor::GetMotorData()
 {
-  return motor_data_;
+  return this->motor_data_;
 }
+
+
+kssbot_hardware::LifeCycleState isv2motor::GetMotorStatus()
+{
+  return this->state_;
+}
+
+//--------------------------------------------------------------------------------calculate 
+
 
 
 //--------------------------------------------------------------------------------calculate 
@@ -869,3 +1012,9 @@ double ChangeMMsToRPM(double mms, double radius, size_t motor_increment, size_t 
 
   return rpm;
 }
+
+
+
+
+
+

@@ -45,7 +45,9 @@ extern "C" {
 #include "isv2motor/isv2motor_define.hpp"
 #include <hw_interface/hw_interface.hpp>
 
+#include <driving_controller/driving_controller.hpp>
 
+class DrivingController;
 
 /**
  * @brief Main Application Class for using isv2motor(control) 
@@ -54,6 +56,29 @@ extern "C" {
 class isv2motor : public kssbot_hardware::actuator_interface
 {
   private:
+
+    /*Comm. timer and values*/
+    /*send-recv check */ 
+    int send_flag_ = 0;
+    int last_send_id_ = 0;
+    int send_repeat_cnt_ = 0;
+
+    double wheel_radius_ = 100.0; //40, 100
+    size_t reducer_rate_ = 50; //2 , 50
+    size_t motor_encoder_increment = 10000;
+
+
+    /*init data*/
+    double motor_acc_ = 0.0f;
+    double motor_dec_ = 0.0f;
+    double max_motor_vel_ = 0.0f;
+
+    /*test */
+    int selected_index = 0;
+
+  public:
+    DrivingController* controller_;
+
     /*system data*/
     std::vector<Isv2MotorStruct*> motor_data_;
 
@@ -63,24 +88,6 @@ class isv2motor : public kssbot_hardware::actuator_interface
 
     std::vector<CAN_data_struct> recv_data_queue_;
 
-
-    /*Comm. timer and values*/
-    /*send-recv check */ 
-    int send_flag_ = 0;
-    int last_send_id_ = 0;
-    int send_repeat_cnt_ = 0;
-
-    double wheel_radius_ = 40.0;
-    size_t reducer_rate_ = 2;
-    size_t motor_encoder_increment = 10000;
-
-
-    /*init data*/
-    double motor_acc_ = 0.0f;
-    double motor_dec_ = 0.0f;
-    double max_motor_vel_ = 0.0f;
-
-  public:
 
   private:
     kssbot_hardware::IReturnType HardwareInitiailize();
@@ -106,8 +113,27 @@ class isv2motor : public kssbot_hardware::actuator_interface
     /**
      * @brief Construct a new isv2motor object
      * 
+     * @param motor_acc 
+     * @param motor_dec 
+     * @param max_motor_vel 
      */
     isv2motor(double motor_acc, double motor_dec, double max_motor_vel);
+
+    /**
+     * @brief Construct a new isv2motor::isv2motor object
+     * 
+     * @param controller 
+     */
+    isv2motor(DrivingController* controller);
+
+    /**
+     * @brief Destroy the isv2motor object
+     * 
+     * @param controller 
+     * @param node_id 
+     * @param motor_id 
+     */
+    isv2motor(DrivingController* controller, int node_id, int motor_dir);
 
 
 
@@ -199,11 +225,18 @@ class isv2motor : public kssbot_hardware::actuator_interface
 
     void CANIdMoveStop(const int id);
 
+    void CANIdReadStatus(const int id);
+
+    void CANIdReadEncoder(const int id);
+
     void CANIdInstantSetVel(const int id, const int value);
+
+
 
     //--------------------------------------------------------------------------------return types
 
     std::vector<Isv2MotorStruct*> GetMotorData();
+    kssbot_hardware::LifeCycleState GetMotorStatus();
 
     /*instant process*/
     int CANIdInstantProcess(const CAN_data_struct send_data);

@@ -48,7 +48,11 @@ extern "C" {
 
 
 
-    /*Unique status*/
+/*Unique status*/
+#define LEFT_MOTOR_ID           1
+#define RIGHT_MOTOR_ID          2
+
+
 
 
 

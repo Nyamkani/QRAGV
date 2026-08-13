@@ -13,18 +13,24 @@ endif()
 SET(CMAKE_CXX_FLAGS "-pthread -I/usr/local/include -L/usr/local/lib")
 
 file(GLOB_RECURSE sources CONFIGURE_DEPENDS
-      # ${CMAKE_CURRENT_SOURCE_DIR}/modules/pgv100/src/*.cpp
-      # ${CMAKE_CURRENT_SOURCE_DIR}/modules/pgv100/src/*.c
 
-      # ${CMAKE_CURRENT_SOURCE_DIR}/modules/isv2motor/src/*.cpp
-      # ${CMAKE_CURRENT_SOURCE_DIR}/modules/isv2motor/src/*.c
+      # Main class
+      # ${CMAKE_CURRENT_SOURCE_DIR}/modules/qragv/src/*.cpp
+      # ${CMAKE_CURRENT_SOURCE_DIR}/modules/qragv/src/*.c
 
-      # ${CMAKE_CURRENT_SOURCE_DIR}/modules/driving_controller/src/*.cpp
-      # ${CMAKE_CURRENT_SOURCE_DIR}/modules/driving_controller/src/*.c
+      # Driving controller class
+      ${CMAKE_CURRENT_SOURCE_DIR}/modules/pgv100/src/*.cpp
+      ${CMAKE_CURRENT_SOURCE_DIR}/modules/pgv100/src/*.c
 
+      ${CMAKE_CURRENT_SOURCE_DIR}/modules/isv2motor/src/*.cpp
+      ${CMAKE_CURRENT_SOURCE_DIR}/modules/isv2motor/src/*.c
 
-      ${CMAKE_CURRENT_SOURCE_DIR}/modules/qragv/src/*.cpp
-      ${CMAKE_CURRENT_SOURCE_DIR}/modules/qragv/src/*.c
+      ${CMAKE_CURRENT_SOURCE_DIR}/modules/driving_controller/src/*.cpp
+      ${CMAKE_CURRENT_SOURCE_DIR}/modules/driving_controller/src/*.c
+
+      # Ethernet controller class
+      # ${CMAKE_CURRENT_SOURCE_DIR}/modules/agvserver/src/*.cpp
+      # ${CMAKE_CURRENT_SOURCE_DIR}/modules/agvserver/src/*.c
 
 )
 
@@ -49,7 +55,10 @@ target_include_directories(${PROJECT_NAME} PUBLIC
   ${CMAKE_CURRENT_SOURCE_DIR}/modules/isv2motor/include 
   ${CMAKE_CURRENT_SOURCE_DIR}/modules/driving_controller/include 
 
-  ${CMAKE_CURRENT_SOURCE_DIR}/modules/qragv/include 
+  # ${CMAKE_CURRENT_SOURCE_DIR}/modules/qragv/include 
+
+  # ${CMAKE_CURRENT_SOURCE_DIR}/modules/agvserver/include 
+
 
 )
 

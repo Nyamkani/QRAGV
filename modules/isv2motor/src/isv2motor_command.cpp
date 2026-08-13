@@ -208,6 +208,40 @@ void isv2motor::CANIdInstantMoveStop(const int id)
 //   return;
 // }
 
+
+void isv2motor::CANIdReadStatus(const int id)
+{
+  CAN_data_struct send_data_buf = MakingSendCANDataStruct(CANIdType::tRSDO, 
+                                                      id, 
+                                                      8,
+                                                      0x6041,
+                                                      0,
+                                                      0
+                                                      );
+
+  this->CANIdInstantProcess(send_data_buf);
+
+  return;
+}
+
+
+void isv2motor::CANIdReadEncoder(const int id)
+{
+  CAN_data_struct send_data_buf = MakingSendCANDataStruct(CANIdType::tRSDO, 
+                                                      id, 
+                                                      8,
+                                                      0x6064,
+                                                      0,
+                                                      0
+                                                      );
+
+  this->CANIdInstantProcess(send_data_buf);
+
+  return;
+}
+
+
+
 void isv2motor::CANIdInstantSetVel(const int id, const int value)
 {
   int value_ = value;
@@ -242,16 +276,22 @@ int isv2motor::CANIdInstantProcess(const CAN_data_struct send_data)
 
   while(witr++ < 3)
   {
-    MCP2515_CANsend(send_data_buf);
+    int ret = MCP2515_CANsend(send_data_buf);
 
-    usleep(1000);
+    if(ret < 0)
+      printf("CAN send fail ret code = %d\r\n", ret);
+
+    usleep(1);
 
     while(ritr++ < 3)
     {
       /*Read data and check error*/
       CAN_data_struct recv_data_buf = {0,};
 
-      MCP2515_CANRecv(&recv_data_buf);
+      ret = MCP2515_CANRecv(&recv_data_buf);
+
+      if(ret < 0)
+        printf("CAN read fail ret code = %d\r\n", ret);
 
       if((send_data_buf.id - CANIDType::sWSDO) == (recv_data_buf.id - CANIDType::sRSDO) &&
           send_data_buf.data[1] == recv_data_buf.data[1] &&
@@ -266,10 +306,10 @@ int isv2motor::CANIdInstantProcess(const CAN_data_struct send_data)
         this->recv_data_queue_.push_back(recv_data_buf);
       }
 
-      usleep(1000);
+      usleep(1);
     }
 
-    usleep(1000);
+    usleep(1);
   }
 
   return result;

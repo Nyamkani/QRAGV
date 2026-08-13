@@ -67,6 +67,22 @@ kssbot_hardware::IReturnType pgv100::Init()
 
   this->is_init_ = true;
 
+
+  int status = 0;
+
+  int cnt = 0;
+
+  while(status < 0)
+  {
+    status = this->SystemOperation();
+
+    usleep(100*1000);
+
+    if(cnt++ > 10)
+      break;
+  }
+
+
   this->state_ = kssbot_hardware::LifeCycleState::kRun;
 
   return kssbot_hardware::IReturnType::kReturnOk;
@@ -354,6 +370,9 @@ kssbot_hardware::IReturnType pgv100::ResponseTelegramParse()
         tag_code |= (this->recv_stream_.at(15) << 14);
         tag_code |= (this->recv_stream_.at(14) << 21);
 
+
+        this->is_tagged_ = true;
+
         this->tag_code_ = tag_code;
       }
       else
@@ -382,7 +401,7 @@ kssbot_hardware::IReturnType pgv100::ResponseTelegramParse()
       this->angle_ = angle;
 
 
-      uint32_t xpos = (this->recv_stream_.at(5));
+      int xpos = (this->recv_stream_.at(5));
 
       xpos |= (this->recv_stream_.at(4) << 7);
 
@@ -390,13 +409,19 @@ kssbot_hardware::IReturnType pgv100::ResponseTelegramParse()
 
       xpos |= ((this->recv_stream_.at(2) & 0x07) << 21);
 
+      if(xpos > pow(2, 24 - 1) && this->is_tagged_)  //24bits signed if tagged but lane is 24bits unsigned
+        xpos = xpos - pow(2, 24); 
+
       this->xpos_ = xpos;
 
 
 
-      uint32_t ypos = (this->recv_stream_.at(7));
+      int ypos = (this->recv_stream_.at(7));
 
       ypos |= (this->recv_stream_.at(6) << 7);
+
+      if(ypos > pow(2, 14 - 1))
+        ypos = ypos - pow(2, 14);   //14bits signed
 
       this->ypos_ = ypos;
 
@@ -480,6 +505,8 @@ PosSensorDataStruct pgv100::GetPGV100DataStructure()
     pgv100_data.xpos = this->GetXPos();
     pgv100_data.ypos = this->GetYPos();
     pgv100_data.angle = this->GetAngle();
+
+    pgv100_data.status = this->state_;
 
   return pgv100_data;
 }

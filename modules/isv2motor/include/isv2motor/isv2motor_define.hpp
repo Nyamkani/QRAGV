@@ -66,8 +66,8 @@ enum Isv2MotorControlWord
 {
   sPowerOn = 0x06,
   sMotorStart = 0x07,
-  sServoOn = 0x0f 
-
+  sServoOn = 0x0f,
+  sAlarmReset = 0x80
 };
 
 enum Isv2MotorDir
@@ -115,6 +115,9 @@ struct Isv2MotorStruct
   int motor_dest = 0;
   int motor_speed = 0;
   
+  int status = 0;
+
+
   /*constructor*/
   Isv2MotorStruct(int id)
   {
@@ -147,6 +150,8 @@ struct MotorDataStruct
   int right_current_motor_pos = 0;
 
   bool is_motor_stopped = true;
+
+  int status = 0;
 };
 
 

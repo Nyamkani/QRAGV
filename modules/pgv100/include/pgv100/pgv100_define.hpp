@@ -87,4 +87,6 @@ struct PosSensorDataStruct
     int xpos = 0;
     int ypos = 0;
     int angle = 0;
+
+    int status = 0;
 };

@@ -1,3 +1,0 @@
-/home/jetson/workspace/QRAGV/build/CMakeFiles/rebuild_cache.dir
-/home/jetson/workspace/QRAGV/build/CMakeFiles/QRAGV.dir
-/home/jetson/workspace/QRAGV/build/CMakeFiles/edit_cache.dir

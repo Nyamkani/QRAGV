@@ -2,6 +2,12 @@
 
 QRAGV는 ROS를 사용하지 않고 C++와 CMake로 구성한 AGV(Automated Guided Vehicle) 제어 프로토타입입니다. NVIDIA Jetson Nano에서 PGV100 광학 위치 센서와 ISV2 모터 드라이버를 직접 연동하고, Linux 환경에서 센서·모터 인터페이스와 주행 제어 구조를 구현하고 학습하기 위해 개발했습니다.
 
+<p align="center">
+  <img src="https://github.com/Nyamkani/QRAGV/blob/9002031a8359419d0c993d0621e389b4996212a0/docs/images/jetson_nano_rs485_can.jpg?raw=1" alt="RS485 and CAN expansion module for NVIDIA Jetson Nano" width="500">
+</p>
+
+<p align="center">Jetson Nano에서 사용한 RS485/CAN 확장 모듈</p>
+
 ## 개발 환경
 
 | 항목 | 내용 |
@@ -41,12 +47,9 @@ QRAGV는 ROS를 사용하지 않고 C++와 CMake로 구성한 AGV(Automated Guid
 flowchart LR
     SENSOR["PGV100 Sensor"] -->|UART| PGV["PGV100 Interface"]
     PGV --> SENSORWORKER["Position Sensor Worker"]
-
     JOYPAD["Linux Joypad"] --> JOYWORKER["Joypad Worker"]
-
     SENSORWORKER --> DRIVE["DrivingController"]
     JOYWORKER --> DRIVE
-
     DRIVE --> MOTORWORKER["Driving Motor Worker"]
     MOTORWORKER --> MOTORIF["ISV2 Motor Interface"]
     MOTORIF -->|SPI| MCP["MCP2515"]
@@ -81,6 +84,14 @@ flowchart LR
 
 현재 `main.cpp`에서는 `Drive3()`를 실행합니다.
 
+## 실제 주행 검증
+
+<p align="center">
+  <img src="https://github.com/Nyamkani/QRAGV/blob/9002031a8359419d0c993d0621e389b4996212a0/docs/images/qragv_driving.gif?raw=1" alt="QRAGV driving test" width="300">
+</p>
+
+<p align="center">QRAGV 실제 주행 검증</p>
+
 ## 알려진 한계
 
 - 별도의 상태 추정 필터를 사용하지 않아 encoder 기반 odometry는 장시간 주행 시 실제 위치와 오차가 누적될 수 있습니다.
@@ -100,38 +111,3 @@ cmake --build .
 ## 프로젝트 목적
 
 이 프로젝트는 ROS와 같은 로봇 프레임워크에 의존하지 않고 Linux C++ 환경에서 하드웨어 인터페이스, 센서 데이터 처리, CAN 모터 제어, multi-thread 기반 데이터 처리와 상위 주행 제어 구조를 직접 구현하고 학습하기 위한 프로토타입입니다.
-
----
-
-# QRAGV Prototype
-
-QRAGV is a standalone AGV control prototype built with C/C++ and CMake without ROS. It was developed to study and implement Linux-based hardware interfaces and vehicle-control software on an NVIDIA Jetson Nano.
-
-## Architecture
-
-- PGV100 optical positioning sensor via Linux UART
-- MCP2515 CAN controller via Linux user-space SPI
-- ISV2 motor driver over CAN
-- Sensor, motor, and joystick worker threads
-- Mutex-protected data exchange in `DrivingController`
-- Encoder odometry, QR-based position correction, and S-curve velocity profiling
-- `DrivingController` is instantiated and executed directly from `main.cpp`; no top-level FSM is used in the current runtime structure
-
-## Control Path
-
-```text
-PGV100 -> UART -> PGV100 Interface -> Position Sensor Worker
-                                         |
-                                         v
-                                  DrivingController
-                                         |
-                                         v
-                               Driving Motor Worker
-                                         |
-                                         v
-ISV2 Motor <- CAN <- MCP2515 <- SPI <- ISV2 Motor Interface
-```
-
-## Purpose
-
-This project was created as a prototype for learning and implementing hardware interfaces, sensor processing, CAN motor control, multi-threaded data exchange, odometry, and higher-level vehicle motion control directly in a Linux C++ environment without relying on a robotics framework such as ROS.
